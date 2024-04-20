@@ -1,0 +1,10 @@
+#!/bin/sh
+
+set -e
+
+APP_LISTEN="localhost:8001" APP_LOG_LEVEL="error" ./tmp/main.cover &
+serverPid=$!
+
+npx playwright test
+
+kill $serverPid

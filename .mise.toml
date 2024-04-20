@@ -1,0 +1,14 @@
+[env]
+TASK_TEMP_DIR = "./tmp/task"
+APP_LOGGER = "tinted"
+APP_LOG_LEVEL = "debug"
+
+[tools]
+go = "1.22.2"
+node = "21.7"
+task = "3.36.0"
+golangci-lint = "1.57.2"
+gofumpt = "0.6.0"
+typos = "1.20.9"
+air = "1.51.0"
+"go:github.com/a-h/templ/cmd/templ" = "0.2.663"

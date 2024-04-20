@@ -1,0 +1,39 @@
+linters:
+  presets:
+    - bugs
+    - comment
+    - complexity
+    - error
+    - format
+    - import
+    - metalinter
+    - module
+    - performance
+    - sql
+    - style
+    - test
+    - unused
+  disable:
+    - depguard
+    - wsl
+    - paralleltest
+    - exhaustruct
+    - varnamelen
+    - testpackage
+issues:
+  exclude-rules:
+    - path: _test.go
+      linters:
+        - funlen
+linters-settings:
+  lll:
+    line-length: 140
+    tab-width: 4
+  ireturn:
+    allow:
+      - anon
+      - error
+      - empty
+      - stdlib
+      - generic
+      - templ\.Component$

@@ -1,0 +1,96 @@
+version: "3"
+
+interval: 500ms
+
+tasks:
+  run:
+    desc: Start the application, rebuild and restart it if needed
+    cmds:
+      - defer: templ generate
+      - templ generate --watch --proxy="http://localhost:8000" --cmd="air"
+
+  test:
+    desc: Run unit and integration tests, generate code coverage reports
+    deps: [test:unit, test:int]
+    cmds:
+      - go tool covdata textfmt -i=./tmp/coverage/unit,./tmp/coverage/int -o ./tmp/coverage/profile
+  test:unit:
+    desc: Run unit tests
+    deps: [build:templ, build:style, build:htmx]
+    cmds:
+      - mkdir -p ./tmp/coverage/unit; rm -rf ./tmp/coverage/unit/*
+      - go test -cover ./... -args -test.gocoverdir="$PWD/tmp/coverage/unit"
+  test:int:
+    desc: Run integration tests
+    deps: [build:templ, build:style, build:htmx]
+    cmds:
+      - go build -cover -o tmp/main.cover
+      - mkdir -p ./tmp/coverage/int; rm -rf ./tmp/coverage/int/*
+      - ./tests/run
+    env:
+      GOCOVERDIR: "./tmp/coverage/int"
+
+  build:
+    desc: Build the application and its dependencies
+    deps: [build:templ, build:style, build:htmx]
+    cmds:
+      - go build {{.CLI_ARGS}}
+  build:templ:
+    desc: Generate Go code from templates
+    cmds: [templ generate]
+    sources: [./**/*.templ]
+    generates: [./**/*_templ.go]
+  build:style:
+    desc: Compile and minify CSS styles
+    cmds: [npx tailwindcss --minify -i ./main.css -o ./html/dist/style.dist.css]
+    sources: [./package.json, ./package-lock.json, ./**/*.templ]
+    generates: [./html/dist/style.dist.css]
+  build:htmx:
+    desc: Copy HTMX JavaScript file
+    cmds: [cp ./node_modules/htmx.org/dist/htmx.min.js ./html/dist/htmx.dist.js]
+    sources: [./node_modules/htmx.org/dist/htmx.min.js]
+    generates: [./html/dist/htmx.dist.js]
+
+  fmt:
+    desc: Format the codebase
+    deps: [fmt:go, fmt:templ, fmt:other]
+  fmt:go:
+    desc: Format Go files
+    cmds: [gofumpt -w .]
+    sources: [./**/*.go]
+  fmt:templ:
+    desc: Format Templ files
+    cmds: [templ fmt .]
+    sources: [./**/*.templ]
+  fmt:other:
+    desc: Format other files
+    cmds: [npx prettier -w .]
+    sources: [./**/*.css, ./**/*.yml, ./**/*.json, ./**/*.ts]
+
+  lint:
+    desc: Lint the codebase
+    deps: [lint:go, lint:typos, lint:fmt]
+  lint:go:
+    desc: Lint Go files
+    cmds: [golangci-lint run]
+  lint:typos:
+    desc: Lint the codebase for typos
+    cmds: [typos]
+  lint:fmt:
+    desc: Check formatting
+    cmds: [npx prettier --list-different .]
+
+  init:
+    desc: Initialize the project for Go and Node.js
+    deps: [init:go, init:node]
+  init:go:
+    desc: Initialize Go dependencies and generate code
+    cmds:
+      - go mod download
+      - task: build:templ
+  init:node:
+    desc: Initialize Node.js dependencies and build styles
+    cmds:
+      - npm ci
+      - npx playwright install chromium
+      - task: build:style

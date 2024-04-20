@@ -1,0 +1,86 @@
+package html
+
+import "encoding/json"
+
+func headers(ctx context.Context) (string, error) {
+	csrfToken, err := csrfToken(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	headers := map[string]string{csrfHeaderName: csrfToken}
+	bytes, err := json.Marshal(headers)
+	if err != nil {
+		return "", err
+	}
+
+	return string(bytes), nil
+}
+
+templ Layout(title string) {
+	<!DOCTYPE html>
+	<html>
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>{ title }</title>
+			<link href={ assetPath(ctx, "style.dist.css") } rel="stylesheet"/>
+			<link href={ assetPath(ctx, "favicon.ico") } rel="icon" type="image/x-icon"/>
+			<script src={ assetPath(ctx, "htmx.dist.js") }></script>
+		</head>
+		<body class="flex h-screen" hx-headers={ headers(ctx) } hx-boost="true">
+			<div class="m-auto w-full max-w-screen-lg p-4">
+				<h1 class="text-3xl font-black text-center">{ title }</h1>
+				{ children... }
+				<footer class="text-center mt-4 font-black">
+					<a href="/" class="link">ShareSecrets</a> © 2024
+				</footer>
+			</div>
+		</body>
+	</html>
+}
+
+templ FormRow() {
+	<div class="mt-2">
+		{ children... }
+	</div>
+}
+
+templ Input(name, value string, attrs templ.Attributes) {
+	<input id={ name } name={ name } value={ value } class="input input-bordered w-full" { attrs... }/>
+}
+
+templ Textarea(name, value string, attrs templ.Attributes) {
+	<textarea id={ name } name={ name } class="textarea textarea-bordered w-full" rows="10" { attrs... }>{ value }</textarea>
+}
+
+templ Label(forId, label string) {
+	<label for={ forId } class="label label-text font-bold">{ label }</label>
+}
+
+templ Submit(label string) {
+	<input type="submit" class="btn btn-primary" value={ label }/>
+}
+
+script copyToClipboard(id string) {
+	const element = document.getElementById(id);
+	if (element === null) {
+		return;
+	}
+
+	navigator.clipboard.writeText(element.value);
+}
+
+templ CopyButton(id string) {
+	<button class="join-item btn btn-primary" onclick={ copyToClipboard(id) }>Copy</button>
+}
+
+templ Violations(violations []string) {
+	if len(violations) > 0 {
+		<ul class="mt-2 alert alert-warning font-bold" role="alert">
+			for _, violation := range violations {
+				<li>{ violation }</li>
+			}
+		</ul>
+	}
+}
