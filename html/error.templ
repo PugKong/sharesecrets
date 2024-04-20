@@ -1,0 +1,28 @@
+package html
+
+templ ServerError() {
+	@Layout("500: Something broke on our side") {
+		@thugCat()
+	}
+}
+
+templ UserError() {
+	@Layout("400: Something broke on your side") {
+		@thugCat()
+	}
+}
+
+templ thugCat() {
+	<div class="m-4 flex items-center justify-center">
+		<iframe
+			width="560"
+			height="315"
+			src="https://www.youtube.com/embed/R4anpxoHkPI?si=AwMdpSu_-lcba-A8"
+			title="YouTube video player"
+			frameborder="0"
+			allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+			referrerpolicy="strict-origin-when-cross-origin"
+			allowfullscreen
+		></iframe>
+	</div>
+}
