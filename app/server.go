@@ -48,6 +48,7 @@ func (s *server) Run(ctx context.Context) bool {
 
 	var handler http.Handler = mux
 
+	handler = html.NewRecoverMiddleware(s.logger, renderer)(handler)
 	handler = html.NewCSRFMiddleware(s.logger, renderer)(handler)
 	handler = html.NewAssetsMiddleware(s.logger, assets)(handler)
 	handler = html.NewParseFormMiddleware(renderer)(handler)
