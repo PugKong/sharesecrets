@@ -24,8 +24,6 @@ func New(getenv func(string) string) *App {
 }
 
 func (a *App) Run(ctx context.Context) error {
-	ctx, cancel := context.WithCancelCause(ctx)
-
 	logger := logger.New(os.Stderr, a.env.LogLevel(), a.env.TintedLogger())
 
 	slog.SetLogLoggerLevel(slog.LevelError)
@@ -42,7 +40,11 @@ func (a *App) Run(ctx context.Context) error {
 	)
 
 	server := newServer(logger.With("layer", "http"), secrets, a.env.ListenAddr())
+	if err := server.Init(ctx); err != nil {
+		return err
+	}
 
+	ctx, cancel := context.WithCancelCause(ctx)
 	var services sync.WaitGroup
 	start := func(serve func(ctx context.Context) error) {
 		services.Add(1)
