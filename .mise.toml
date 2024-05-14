@@ -4,7 +4,7 @@ APP_LOGGER = "tinted"
 APP_LOG_LEVEL = "debug"
 
 [tools]
-go = "1.22.2"
+go = "1.22.3"
 node = "22"
 task = "3.36.0"
 golangci-lint = "1.57.2"
