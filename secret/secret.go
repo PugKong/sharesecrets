@@ -118,7 +118,7 @@ func (s *Service) Retrieve(ctx context.Context, request RetrieveRequest) (string
 	return "", cmp.Or(s.saveSecret(ctx, request.Key, secret), err) //nolint:wrapcheck
 }
 
-func (s *Service) CleanupLoop(ctx context.Context) bool {
+func (s *Service) CleanupLoop(ctx context.Context) error {
 	timer := time.NewTicker(s.cleanupInterval)
 	defer timer.Stop()
 
@@ -136,7 +136,7 @@ func (s *Service) CleanupLoop(ctx context.Context) bool {
 		case <-ctx.Done():
 			s.logger.InfoContext(ctx, "Secrets cleanup loop stopped")
 
-			return true
+			return fmt.Errorf("secrets cleanup: %w", ctx.Err())
 		}
 	}
 }

@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
@@ -26,12 +27,12 @@ func newServer(logger *slog.Logger, secrets *secret.Service, listen string) *ser
 	}
 }
 
-func (s *server) Run(ctx context.Context) bool {
+func (s *server) Run(ctx context.Context) error {
 	assets, err := html.MakeAssets()
 	if err != nil {
 		s.logger.LogAttrs(ctx, slog.LevelError, "HTTP server assets initialization error", slog.String("error", err.Error()))
 
-		return false
+		return fmt.Errorf("assets initialization: %w", err)
 	}
 
 	server := &http.Server{
@@ -57,24 +58,25 @@ func (s *server) Run(ctx context.Context) bool {
 
 	server.Handler = handler
 
-	ctx, cancel := context.WithCancel(ctx)
+	ctx, cancel := context.WithCancelCause(ctx)
 	go func() {
 		s.logger.InfoContext(ctx, "HTTP server started on "+s.listen)
 		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 			s.logger.LogAttrs(ctx, slog.LevelError, "HTTP server serve error", slog.String("error", err.Error()))
+			cancel(err)
 		}
-
-		cancel()
 	}()
 	<-ctx.Done()
+
+	serveErr := fmt.Errorf("http serve: %w", context.Cause(ctx))
 
 	s.logger.InfoContext(ctx, "Shutting down HTTP server")
 	if err := server.Shutdown(context.WithoutCancel(ctx)); err != nil {
 		s.logger.LogAttrs(ctx, slog.LevelError, "HTTP server shutdown error", slog.String("error", err.Error()))
 
-		return false
+		return errors.Join(fmt.Errorf("http shutdown: %w", err), serveErr)
 	}
 	s.logger.InfoContext(ctx, "HTTP server stopped")
 
-	return true
+	return serveErr
 }
