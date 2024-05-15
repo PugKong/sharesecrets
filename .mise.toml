@@ -1,5 +1,4 @@
 [env]
-TASK_TEMP_DIR = "./tmp/task"
 APP_LOGGER = "tinted"
 APP_LOG_LEVEL = "debug"
 
