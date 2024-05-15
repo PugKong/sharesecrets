@@ -27,9 +27,11 @@ type handlerWrapper struct {
 	slog.Handler
 }
 
+const requestIDAttr string = "requestID"
+
 func (h *handlerWrapper) Handle(ctx context.Context, record slog.Record) error {
 	if requestID, ok := ctx.Value(requestIDKey).(string); ok {
-		record.AddAttrs(slog.String("requestID", requestID))
+		record.AddAttrs(slog.String(requestIDAttr, requestID))
 	}
 
 	return h.Handler.Handle(ctx, record) //nolint:wrapcheck
