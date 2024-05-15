@@ -6,7 +6,6 @@ APP_LOG_LEVEL = "debug"
 [tools]
 go = "1.22.3"
 node = "22"
-task = "3.36.0"
 golangci-lint = "1.57.2"
 gofumpt = "0.6.0"
 typos = "1.20.9"
@@ -14,3 +13,89 @@ air = "1.51.0"
 "go:github.com/a-h/templ/cmd/templ" = "0.2.663"
 "go:golang.org/x/tools/gopls" = "latest"
 "go:github.com/go-delve/delve/cmd/dlv" = "latest"
+
+[tasks.init]
+description = "Initialize the project for Go and Node.js"
+depends = ["init:*"]
+
+[tasks."init:go"]
+description = "Initialize Go dependencies"
+run = "go mod download"
+
+[tasks."init:node"]
+description = "Initialize Node.js dependencies"
+run = ["npm ci", "npx playwright install chromium"]
+
+[tasks.start]
+description = "Start the application, rebuild and restart it if needed"
+run = 'templ generate --watch --proxy="http://localhost:8000" --cmd="air"'
+
+[tasks.build]
+description = "Build the application and its dependencies"
+depends = ["build:*"]
+run = "go build"
+
+[tasks."build:templ"]
+description = "Generate Go code from templates"
+run = "templ generate"
+
+[tasks."build:style"]
+description = "Compile and minify CSS styles"
+run = "npx tailwindcss --minify -i ./main.css -o ./html/dist/style.dist.css"
+
+[tasks."build:htmx"]
+description = "Copy HTMX JavaScript file"
+run = "cp ./node_modules/htmx.org/dist/htmx.min.js ./html/dist/htmx.dist.js"
+
+[tasks.fmt]
+description = "Format the codebase"
+depends = ["fmt:*"]
+
+[tasks."fmt:go"]
+description = "Format Go files"
+run = "gofumpt -w ."
+
+[tasks."fmt:templ"]
+description = "Format Templ files"
+run = "templ fmt ."
+
+[tasks."fmt:other"]
+description = "Format other files"
+run = "npx prettier -w ."
+
+[tasks.lint]
+description = "Lint the codebase"
+depends = ["lint:*"]
+
+[tasks."lint:go"]
+description = "Lint Go files"
+run = "golangci-lint run"
+
+[tasks."lint:typos"]
+description = "Lint the codebase for typos"
+run = "typos"
+
+[tasks."lint:fmt"]
+description = "Check formatting"
+run = "npx prettier --list-different ."
+
+[tasks.test]
+description = "Run unit and integration tests, generate code coverage reports"
+depends = ["test:*"]
+run = "go tool covdata textfmt -i=./tmp/coverage/unit,./tmp/coverage/int -o ./tmp/coverage/profile"
+
+[tasks."test:unit"]
+description = "Run unit tests"
+run = [
+    "mkdir -p ./tmp/coverage/unit; rm -rf ./tmp/coverage/unit/*",
+    'go test -cover ./... -args -test.gocoverdir="$PWD/tmp/coverage/unit"',
+]
+
+[tasks."test:int"]
+description = "Run integration tests"
+env = { GOCOVERDIR = "./tmp/coverage/int" }
+run = [
+    "go build -cover -o tmp/main.cover",
+    "mkdir -p ./tmp/coverage/int; rm -rf ./tmp/coverage/int/*",
+    "./tests/run",
+]
