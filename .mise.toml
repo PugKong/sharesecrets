@@ -93,9 +93,18 @@ run = [
 
 [tasks."test:int"]
 description = "Run integration tests"
-env = { GOCOVERDIR = "./tmp/coverage/int" }
-run = [
-    "go build -cover -o tmp/main.cover",
-    "mkdir -p ./tmp/coverage/int; rm -rf ./tmp/coverage/int/*",
-    "./tests/run",
-]
+run = """
+#!/bin/sh
+
+set -e
+
+go build -cover -o tmp/main.cover
+mkdir -p ./tmp/coverage/int; rm -rf ./tmp/coverage/int/*
+
+GOCOVERDIR="./tmp/coverage/int" APP_LISTEN="localhost:8001" APP_LOG_LEVEL="error" ./tmp/main.cover &
+serverPid=$!
+
+npx playwright test
+
+kill $serverPid
+"""
