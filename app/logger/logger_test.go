@@ -3,13 +3,13 @@ package logger
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"log/slog"
 	"strings"
 	"testing"
 	"testing/slogtest"
 
 	"github.com/lmittmann/tint"
+	"github.com/pugkong/sharesecrets/loggertest"
 	"github.com/stretchr/testify/require"
 )
 
@@ -100,44 +100,18 @@ func TestNew(t *testing.T) {
 }
 
 func TestHandlerWrapper(t *testing.T) {
-	newLogger := func() (*slog.Logger, func(t *testing.T) []map[string]any) {
-		t.Helper()
-
-		buf := &bytes.Buffer{}
-		handler := slog.NewJSONHandler(buf, nil)
-		wrapper := &handlerWrapper{handler}
-		logger := slog.New(wrapper)
-
-		output := func(t *testing.T) []map[string]any {
-			t.Helper()
-
-			var ms []map[string]any
-			for _, line := range bytes.Split(buf.Bytes(), []byte{'\n'}) {
-				if len(line) == 0 {
-					continue
-				}
-
-				var m map[string]any
-				if err := json.Unmarshal(line, &m); err != nil {
-					t.Fatal(err)
-				}
-				ms = append(ms, m)
-			}
-
-			return ms
-		}
-
-		return logger, output
-	}
-
 	t.Run("it passes std tests", func(t *testing.T) {
-		logger, output := newLogger()
-		err := slogtest.TestHandler(logger.Handler(), func() []map[string]any { return output(t) })
+		buf := &bytes.Buffer{}
+		handler := handlerWrapper{slog.NewJSONHandler(buf, nil)}
+
+		err := slogtest.TestHandler(&handler, func() []map[string]any { return loggertest.ParseJSON(t, buf) })
 		require.NoError(t, err)
 	})
 
+	wrap := func(h slog.Handler) slog.Handler { return &handlerWrapper{h} }
+
 	t.Run("it adds requestID attr", func(t *testing.T) {
-		logger, output := newLogger()
+		logger, output := loggertest.NewWithHandlerWrapper(wrap)
 
 		const requestID = "42"
 		ctx := context.WithValue(context.Background(), requestIDKey, requestID)
@@ -149,7 +123,7 @@ func TestHandlerWrapper(t *testing.T) {
 	})
 
 	t.Run("it wraps Handler.WithAttrs method", func(t *testing.T) {
-		logger, output := newLogger()
+		logger, output := loggertest.NewWithHandlerWrapper(wrap)
 
 		const attrName = "answer"
 		const attrValue = "42"
@@ -163,7 +137,7 @@ func TestHandlerWrapper(t *testing.T) {
 	})
 
 	t.Run("it wraps Handler.WithGroup method", func(t *testing.T) {
-		logger, output := newLogger()
+		logger, output := loggertest.NewWithHandlerWrapper(wrap)
 
 		const groupName = "group"
 		const attrName = "answer"

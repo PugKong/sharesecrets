@@ -51,7 +51,7 @@ func (s *server) Init(ctx context.Context) error {
 	handler = html.NewAssetsMiddleware(s.logger, assets)(handler)
 	handler = html.NewParseFormMiddleware(renderer)(handler)
 	handler = logger.NewRequestLoggerMiddleware(s.logger)(handler)
-	handler = logger.NewRequestIDMiddleware(s.logger)(handler)
+	handler = logger.NewRequestIDMiddleware(s.logger).Handler(handler)
 	s.server.Handler = handler
 
 	return nil
