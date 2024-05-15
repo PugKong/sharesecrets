@@ -6,35 +6,43 @@ import (
 	"time"
 )
 
-func NewRequestLoggerMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		fn := func(w http.ResponseWriter, r *http.Request) {
-			ww := newCustomResponseWriter(w)
+type RequestLoggerMiddleware struct {
+	logger *slog.Logger
+	now    func() time.Time
+}
 
-			logger.LogAttrs(r.Context(), slog.LevelInfo, "HTTP request accepted",
-				slog.String("method", r.Method),
-				slog.String("path", r.URL.Path),
-			)
+func NewRequestLoggerMiddleware(logger *slog.Logger) *RequestLoggerMiddleware {
+	return &RequestLoggerMiddleware{
+		logger: logger,
+		now:    time.Now,
+	}
+}
 
-			t1 := time.Now()
-			next.ServeHTTP(ww, r)
-			t2 := time.Now()
+func (m *RequestLoggerMiddleware) Handler(next http.Handler) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		ww := newCustomResponseWriter(w)
 
-			duration := t2.Sub(t1)
+		m.logger.LogAttrs(r.Context(), slog.LevelInfo, "HTTP request accepted",
+			slog.String("method", r.Method),
+			slog.String("path", r.URL.Path),
+		)
 
-			level := slog.LevelInfo
-			if ww.statusCode >= http.StatusInternalServerError {
-				level = slog.LevelError
-			}
+		t1 := m.now()
+		next.ServeHTTP(ww, r)
+		t2 := m.now()
 
-			logger.LogAttrs(r.Context(), level, "HTTP request handled",
-				slog.Int("status", ww.statusCode),
-				slog.String("duration", duration.String()),
-			)
+		level := slog.LevelInfo
+		if ww.statusCode >= http.StatusInternalServerError {
+			level = slog.LevelError
 		}
 
-		return http.HandlerFunc(fn)
+		m.logger.LogAttrs(r.Context(), level, "HTTP request handled",
+			slog.Int("status", ww.statusCode),
+			slog.String("duration", t2.Sub(t1).String()),
+		)
 	}
+
+	return http.HandlerFunc(fn)
 }
 
 type customResponseWriter struct {
