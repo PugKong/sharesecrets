@@ -1,7 +1,9 @@
 package app
 
 import (
+	"io"
 	"log/slog"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -93,6 +95,36 @@ func TestEnv_LogLevel(t *testing.T) {
 			env := newEnv(mapenv(test.env))
 
 			actual := env.LogLevel()
+
+			require.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestEnv_LogOutput(t *testing.T) {
+	tests := map[string]struct {
+		env      map[string]string
+		expected io.Writer
+	}{
+		"default value": {
+			env:      nil,
+			expected: os.Stderr,
+		},
+		"stdout": {
+			env:      map[string]string{"APP_LOG_OUTPUT": "stdout"},
+			expected: os.Stdout,
+		},
+		"discard": {
+			env:      map[string]string{"APP_LOG_OUTPUT": "discard"},
+			expected: io.Discard,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			env := newEnv(mapenv(test.env))
+
+			actual := env.LogOutput()
 
 			require.Equal(t, test.expected, actual)
 		})

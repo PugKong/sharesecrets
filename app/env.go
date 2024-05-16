@@ -1,6 +1,10 @@
 package app
 
-import "log/slog"
+import (
+	"io"
+	"log/slog"
+	"os"
+)
 
 type env struct {
 	getenv func(string) string
@@ -24,13 +28,24 @@ func (e *env) TintedLogger() bool {
 
 func (e *env) LogLevel() slog.Level {
 	switch e.getenv("APP_LOG_LEVEL") {
+	default:
+		return slog.LevelInfo
 	case "debug":
 		return slog.LevelDebug
 	case "warn":
 		return slog.LevelWarn
 	case "error":
 		return slog.LevelError
+	}
+}
+
+func (e *env) LogOutput() io.Writer {
+	switch e.getenv("APP_LOG_OUTPUT") {
 	default:
-		return slog.LevelInfo
+		return os.Stderr
+	case "stdout":
+		return os.Stdout
+	case "discard":
+		return io.Discard
 	}
 }

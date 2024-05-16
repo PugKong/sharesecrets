@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"os"
 	"sync"
 	"time"
 
@@ -24,7 +23,7 @@ func New(getenv func(string) string) *App {
 }
 
 func (a *App) Run(ctx context.Context) error {
-	logger := logger.New(os.Stderr, a.env.LogLevel(), a.env.TintedLogger())
+	logger := logger.New(a.env.LogOutput(), a.env.LogLevel(), a.env.TintedLogger())
 
 	slog.SetLogLoggerLevel(slog.LevelError)
 	slog.SetDefault(logger.With(slog.String("layer", "fallback")))
