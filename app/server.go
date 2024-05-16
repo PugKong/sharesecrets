@@ -46,7 +46,7 @@ func (s *server) Init(ctx context.Context) error {
 	mux.HandleFunc("/{key}", secretHandler.Open)
 
 	var handler http.Handler = mux
-	handler = html.NewRecoverMiddleware(s.logger, renderer)(handler)
+	handler = html.NewRecoverMiddleware(s.logger, renderer).Handler(handler)
 	handler = html.NewCSRFMiddleware(s.logger, renderer)(handler)
 	handler = html.NewAssetsMiddleware(s.logger, assets)(handler)
 	handler = html.NewParseFormMiddleware(renderer)(handler)
