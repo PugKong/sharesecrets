@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/pugkong/sharesecrets/app/logger"
 	"github.com/pugkong/sharesecrets/html"
+	"github.com/pugkong/sharesecrets/logger"
 	"github.com/pugkong/sharesecrets/secret"
 )
 

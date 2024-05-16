@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pugkong/sharesecrets/app/logger"
+	"github.com/pugkong/sharesecrets/logger"
 	"github.com/pugkong/sharesecrets/secret"
 )
 
