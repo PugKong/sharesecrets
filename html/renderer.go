@@ -2,7 +2,6 @@ package html
 
 import (
 	"context"
-	"errors"
 	"log/slog"
 	"net/http"
 
@@ -41,15 +40,4 @@ func (r *Renderer) ServerError(ctx context.Context, w http.ResponseWriter, err e
 	if err := ServerError().Render(ctx, w); err != nil {
 		r.logger.LogAttrs(ctx, slog.LevelError, "Failed to render server error page", slog.String("error", err.Error()))
 	}
-}
-
-var errContextMissingCSRFToken = errors.New("context doesn't contain csrf token")
-
-func csrfToken(ctx context.Context) (string, error) {
-	token, ok := ctx.Value(csrfKey).(string)
-	if !ok {
-		return "", errContextMissingCSRFToken
-	}
-
-	return token, nil
 }

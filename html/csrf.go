@@ -65,3 +65,14 @@ func NewCSRFMiddleware(logger *slog.Logger, renderer *Renderer) func(http.Handle
 		return http.HandlerFunc(fn)
 	}
 }
+
+var errContextMissingCSRFToken = errors.New("context doesn't contain csrf token")
+
+func csrfToken(ctx context.Context) (string, error) {
+	token, ok := ctx.Value(csrfKey).(string)
+	if !ok {
+		return "", errContextMissingCSRFToken
+	}
+
+	return token, nil
+}
