@@ -45,7 +45,7 @@ type Store interface {
 	Save(ctx context.Context, key string, secret Secret) error
 	Load(ctx context.Context, key string) (Secret, error)
 	Remove(ctx context.Context, key string) error
-	Cleanup(ctx context.Context)
+	Cleanup(ctx context.Context) error
 }
 
 type Service struct {
@@ -129,10 +129,19 @@ func (s *Service) CleanupLoop(ctx context.Context) error {
 			s.logger.InfoContext(ctx, "Secrets cleanup started")
 
 			start := time.Now()
-			s.store.Cleanup(ctx)
+			err := s.store.Cleanup(ctx)
 			duration := time.Since(start)
 
-			s.logger.LogAttrs(ctx, slog.LevelInfo, "Secrets cleanup completed", slog.String("duration", duration.String()))
+			if err == nil {
+				s.logger.LogAttrs(ctx, slog.LevelInfo, "Secrets cleanup completed",
+					slog.String("duration", duration.String()),
+				)
+			} else {
+				s.logger.LogAttrs(ctx, slog.LevelError, "Secrets cleanup loop error",
+					slog.String("error", err.Error()),
+					slog.String("duration", duration.String()),
+				)
+			}
 		case <-ctx.Done():
 			s.logger.InfoContext(ctx, "Secrets cleanup loop stopped")
 

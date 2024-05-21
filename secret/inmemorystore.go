@@ -60,7 +60,7 @@ func (s *InMemoryStore) Remove(ctx context.Context, key string) error {
 	return nil
 }
 
-func (s *InMemoryStore) Cleanup(ctx context.Context) {
+func (s *InMemoryStore) Cleanup(ctx context.Context) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -71,4 +71,6 @@ func (s *InMemoryStore) Cleanup(ctx context.Context) {
 			s.logger.LogAttrs(ctx, slog.LevelDebug, "Expired secret removed", slog.String("key", key))
 		}
 	}
+
+	return nil
 }

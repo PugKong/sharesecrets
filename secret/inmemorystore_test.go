@@ -52,7 +52,8 @@ func TestInMemoryStore(t *testing.T) {
 		err = store.Save(ctx, activeSecretKey, Secret{exp: time.Now().Add(time.Minute)})
 		require.NoError(t, err)
 
-		store.Cleanup(ctx)
+		err = store.Cleanup(ctx)
+		require.NoError(t, err)
 
 		_, err = store.Load(ctx, expiredSecretKey)
 		require.Error(t, err)

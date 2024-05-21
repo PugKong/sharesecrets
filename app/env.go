@@ -49,3 +49,7 @@ func (e *env) LogOutput() io.Writer {
 		return io.Discard
 	}
 }
+
+func (e *env) DB() string {
+	return e.getenv("APP_DB")
+}

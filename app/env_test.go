@@ -130,3 +130,29 @@ func TestEnv_LogOutput(t *testing.T) {
 		})
 	}
 }
+
+func TestEnv_DB(t *testing.T) {
+	tests := map[string]struct {
+		env      map[string]string
+		expected string
+	}{
+		"default": {
+			env:      nil,
+			expected: "",
+		},
+		"postgres": {
+			env:      map[string]string{"APP_DB": "postgres://postgres:password@localhost:5432/postgres"},
+			expected: "postgres://postgres:password@localhost:5432/postgres",
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			env := newEnv(mapenv(test.env))
+
+			actual := env.DB()
+
+			require.Equal(t, test.expected, actual)
+		})
+	}
+}
