@@ -47,7 +47,13 @@ func (a *App) Run(ctx context.Context) error {
 	} else {
 		logger.InfoContext(ctx, "Using in-memory storage")
 	}
-	secrets := a.makeSecretsService(logger, pool)
+
+	secrets, err := a.makeSecretsService(ctx, logger, pool)
+	if err != nil {
+		logger.LogAttrs(ctx, slog.LevelError, "Failed to initialize secrets service", slog.String("error", err.Error()))
+
+		return err
+	}
 
 	server := newServer(logger.With("layer", "http"), secrets, a.env.ListenAddr())
 	if err := server.Init(ctx); err != nil {
@@ -78,12 +84,17 @@ func (a *App) Run(ctx context.Context) error {
 	return fmt.Errorf("app run: %w", context.Cause(ctx))
 }
 
-func (a *App) makeSecretsService(logger *slog.Logger, pool *pgxpool.Pool) *secret.Service {
+func (a *App) makeSecretsService(ctx context.Context, logger *slog.Logger, pool *pgxpool.Pool) (*secret.Service, error) {
 	encryptor := secret.NewSecretboxEncryptor(logger.With(slog.String("layer", "encryptor")))
 
 	var store secret.Store
 	if pool != nil {
-		store = secret.NewPgStore(pool)
+		s := secret.NewPgStore(pool)
+		if err := s.Init(ctx); err != nil {
+			return nil, fmt.Errorf("secret pg store initialization: %w", err)
+		}
+
+		store = s
 	} else {
 		store = secret.NewInMemoryStore(logger.With(slog.String("layer", "store")))
 	}
@@ -94,5 +105,5 @@ func (a *App) makeSecretsService(logger *slog.Logger, pool *pgxpool.Pool) *secre
 		store,
 		time.Minute,
 		time.Now,
-	)
+	), nil
 }
