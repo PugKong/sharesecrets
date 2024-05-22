@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -13,14 +12,12 @@ import (
 var _ Store = &PgStore{}
 
 type PgStore struct {
-	logger *slog.Logger
-	pool   *pgxpool.Pool
+	pool *pgxpool.Pool
 }
 
-func NewPgStore(logger *slog.Logger, pool *pgxpool.Pool) *PgStore {
+func NewPgStore(pool *pgxpool.Pool) *PgStore {
 	return &PgStore{
-		logger: logger,
-		pool:   pool,
+		pool: pool,
 	}
 }
 

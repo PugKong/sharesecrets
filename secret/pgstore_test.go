@@ -3,7 +3,6 @@ package secret
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"testing"
 	"time"
 
@@ -37,11 +36,10 @@ func TestPgStore(t *testing.T) {
 	port, err := postgres.MappedPort(ctx, nat.Port("5432/tcp"))
 	require.NoError(t, err)
 
-	logger := slog.Default()
 	pool, err := pgxpool.New(ctx, fmt.Sprintf("postgres://postgres:password@localhost:%s/postgres", port.Port()))
 	require.NoError(t, err)
 
-	store := NewPgStore(logger, pool)
+	store := NewPgStore(pool)
 	err = store.Init(ctx)
 	require.NoError(t, err)
 
